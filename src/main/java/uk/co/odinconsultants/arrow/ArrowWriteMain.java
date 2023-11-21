@@ -8,13 +8,14 @@ import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.arrow.vector.types.pojo.Field;
 
-import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
-public class ArrowSmokeTest {
+public class ArrowWriteMain {
 
     /**
      * See https://arrow.apache.org/docs/java/ipc.html
@@ -22,7 +23,8 @@ public class ArrowSmokeTest {
      * Exception in thread "main" org.apache.arrow.memory.OutOfMemoryException: Unable to allocate buffer of size 16384 due to memory limit. Current allocation: 1024
      * 	at org.apache.arrow.memory.BaseAllocator.buffer(BaseAllocator.java:310)
      */
-    private static final int MAX_ALLOCATION = 1024 * 1024;
+    public static final int MAX_ALLOCATION = 1024 * 1024;
+    public static final String SHM_FILE = "/dev/shm/arrow";
 
     public static void main(String[] args) throws Exception {
         try (final RootAllocator allocator =
@@ -42,7 +44,7 @@ public class ArrowSmokeTest {
             VectorSchemaRoot root = new VectorSchemaRoot(fields, vectors);
 
             try (
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    OutputStream out = new FileOutputStream(SHM_FILE);
                     ArrowStreamWriter writer = new ArrowStreamWriter(root, /*DictionaryProvider=*/null, Channels.newChannel(out));
             ) {
                 // ... do write into the ArrowStreamWriter
@@ -62,6 +64,7 @@ public class ArrowSmokeTest {
                 }
 
                 writer.end();
+                out.flush();
             }
 
             // Else we get:
