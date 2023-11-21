@@ -14,12 +14,13 @@ import java.util.List;
 public class ArrowSmokeTest {
 
     /**
-     * Causes:
+     * See https://arrow.apache.org/docs/java/ipc.html
+     * If the allocated memory is not huge, we get:
      * Exception in thread "main" org.apache.arrow.memory.OutOfMemoryException: Unable to allocate buffer of size 16384 due to memory limit. Current allocation: 1024
      * 	at org.apache.arrow.memory.BaseAllocator.buffer(BaseAllocator.java:310)
      */
-//    private static final int MAX_ALLOCATION = 8 * 1024;
-    private static final int MAX_ALLOCATION = 1024;
+    private static final int MAX_ALLOCATION = 1024 * 1024;
+//    private static final int MAX_ALLOCATION = 1024;
 
     public static void main(String[] args) {
         try (final RootAllocator allocator =
@@ -29,6 +30,7 @@ public class ArrowSmokeTest {
             for (int i = 0; i < 10; i++) {
                 bitVector.setSafe(i, i % 2 == 0 ? 0 : 1);
                 varCharVector.setSafe(i, ("test" + i).getBytes(StandardCharsets.UTF_8));
+                System.out.println("Successfully setSafe");
             }
             bitVector.setValueCount(10);
             varCharVector.setValueCount(10);
@@ -36,6 +38,7 @@ public class ArrowSmokeTest {
             List<Field> fields = Arrays.asList(bitVector.getField(), varCharVector.getField());
             List<FieldVector> vectors = Arrays.asList(bitVector, varCharVector);
             VectorSchemaRoot root = new VectorSchemaRoot(fields, vectors);
+            root.close();
         }
     }
 
